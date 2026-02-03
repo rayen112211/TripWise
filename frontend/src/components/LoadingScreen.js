@@ -29,13 +29,13 @@ export const LoadingScreen = ({ destination = "your destination" }) => {
     const [currentFact, setCurrentFact] = useState(funFacts[0]);
 
     useEffect(() => {
-        // Progress animation
+        // Progress animation - cap at 95% to prevent showing 100% while waiting for response
         const interval = setInterval(() => {
             setProgress((prev) => {
-                if (prev >= 100) return 100;
+                if (prev >= 95) return 95; // Cap at 95% until response arrives
                 return prev + 1;
             });
-        }, 300); // Reach 100% in ~30 seconds
+        }, 400); // Reach 95% in ~38 seconds
 
         // Update step based on progress
         const stepInterval = setInterval(() => {
