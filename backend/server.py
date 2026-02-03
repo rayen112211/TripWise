@@ -17,9 +17,13 @@ import asyncio
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
+# MongoDB connection with SSL/handshake fixes for cloud environments
 mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
+client = AsyncIOMotorClient(
+    mongo_url,
+    serverSelectionTimeoutMS=5000,
+    tlsAllowInvalidCertificates=True # Helps with some cloud handshake issues
+)
 db = client[os.environ['DB_NAME']]
 
 # Create the main app without a prefix
@@ -254,7 +258,7 @@ Return ONLY valid JSON:
             return itinerary
         except Exception as e:
             logging.error(f"Processing error: {e}")
-            raise HTTPException(status_code=500, detail="Data processing error")
+            raise HTTPException(status_code=500, detail="AI Logic or Data Error")
     except HTTPException:
         raise
     except Exception as e:
