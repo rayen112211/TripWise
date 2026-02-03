@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Plane, 
-  MapPin, 
-  Calendar, 
-  Users, 
-  DollarSign, 
-  Heart, 
+import {
+  Plane,
+  MapPin,
+  Calendar,
+  Users,
+  DollarSign,
+  Heart,
   Sparkles,
   Loader2,
   Download
@@ -15,26 +15,26 @@ import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { DayCard } from "@/components/DayCard";
 import "./App.css";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+// Use REACT_APP_API_URL from Vercel environment, fallback to localhost for development
+const API = process.env.REACT_APP_API_URL || "http://localhost:8000/api";
 
 function App() {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [itinerary, setItinerary] = useState(null);
-  
+
   const [formData, setFormData] = useState({
     destination: "",
     start_date: "",
@@ -54,7 +54,7 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       const response = await axios.post(`${API}/generate-itinerary`, formData);
       setItinerary(response.data);
@@ -69,11 +69,11 @@ function App() {
 
   const downloadItinerary = () => {
     if (!itinerary) return;
-    
+
     const dataStr = JSON.stringify(itinerary, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
     const exportFileDefaultName = `${itinerary.trip.destination}-itinerary.json`;
-    
+
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);
@@ -108,7 +108,7 @@ function App() {
             className="relative min-h-screen flex items-center justify-center overflow-hidden"
           >
             {/* Hero Background */}
-            <div 
+            <div
               className="absolute inset-0 z-0"
               style={{
                 backgroundImage: `url('https://images.unsplash.com/photo-1631535152690-ba1a85229136?crop=entropy&cs=srgb&fm=jpg&q=85')`,
@@ -133,9 +133,9 @@ function App() {
                   </h1>
                   <Plane className="w-12 h-12 text-primary" />
                 </div>
-                
+
                 <p className="text-xl md:text-2xl text-white/90 mb-12 leading-relaxed max-w-3xl mx-auto">
-                  Your personal AI travel planner. Get a complete, day-by-day itinerary 
+                  Your personal AI travel planner. Get a complete, day-by-day itinerary
                   tailored to your style, budget, and interests in seconds.
                 </p>
 
@@ -247,8 +247,8 @@ function App() {
                     <Label htmlFor="traveler_type" className="text-base font-medium mb-2">
                       Traveler Type
                     </Label>
-                    <Select 
-                      value={formData.traveler_type} 
+                    <Select
+                      value={formData.traveler_type}
                       onValueChange={(value) => handleInputChange('traveler_type', value)}
                     >
                       <SelectTrigger data-testid="traveler-type-select" className="h-14 text-lg rounded-xl">
@@ -269,8 +269,8 @@ function App() {
                     <Label htmlFor="travel_style" className="text-base font-medium mb-2">
                       Travel Style
                     </Label>
-                    <Select 
-                      value={formData.travel_style} 
+                    <Select
+                      value={formData.travel_style}
                       onValueChange={(value) => handleInputChange('travel_style', value)}
                     >
                       <SelectTrigger data-testid="travel-style-select" className="h-14 text-lg rounded-xl">
