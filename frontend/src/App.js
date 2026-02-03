@@ -129,7 +129,7 @@ function App() {
                 <div className="flex items-center justify-center gap-3 mb-6">
                   <Sparkles className="w-12 h-12 text-accent-yellow" />
                   <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight">
-                    WanderLust AI
+                    TripWise
                   </h1>
                   <Plane className="w-12 h-12 text-primary" />
                 </div>

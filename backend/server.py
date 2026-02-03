@@ -86,7 +86,7 @@ class StatusCheckCreate(BaseModel):
 
 @api_router.get("/")
 async def root():
-    return {"message": "WanderLust AI Travel Planner API"}
+    return {"message": "TripWise API"}
 
 @api_router.post("/status", response_model=StatusCheck)
 async def create_status_check(input: StatusCheckCreate):

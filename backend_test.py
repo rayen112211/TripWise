@@ -3,7 +3,7 @@ import sys
 import json
 from datetime import datetime
 
-class TravelPlannerAPITester:
+class TripWiseAPITester:
     def __init__(self, base_url="https://voyager-plan-1.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
@@ -151,10 +151,10 @@ class TravelPlannerAPITester:
         return self.run_test("Get All Itineraries", "GET", "itineraries", 200)
 
 def main():
-    print("🚀 Starting WanderLust AI Travel Planner API Tests")
+    print("🚀 Starting TripWise API Tests")
     print("=" * 60)
     
-    tester = TravelPlannerAPITester()
+    tester = TripWiseAPITester()
     
     # Test basic endpoints first
     print("\n📋 Testing Basic Endpoints...")
