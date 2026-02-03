@@ -18,25 +18,6 @@ import re
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# JSON Repair Helper
-def repair_json_string(text: str) -> str:
-    """Fix common JSON issues from AI responses"""
-    # Remove BOM
-    text = text.strip().replace('\ufeff', '')
-    
-    # Fix smart quotes
-    text = text.replace('"', '"').replace('"', '"')
-    text = text.replace("'", "'").replace("'", "'")
-    
-    # Remove control chars (except \n, \t, \r)
-    text = re.sub(r'[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f]', '', text)
-    
-    # Fix unescaped quotes in values (simple heuristic)
-    # Replace ' with escaped ' in string values
-    text = re.sub(r'(["\'])(.*?)\1', lambda m: m.group(1) + m.group(2).replace('"', '\\"') + m.group(1), text)
-    
-    return text
-
 # MongoDB connection with SSL/handshake fixes for cloud environments
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(
@@ -287,9 +268,6 @@ REMEMBER: Use commas between array items, NO comma after last item. All strings 
         if response_text.rfind("}") != -1:
             end = response_text.rfind("}") + 1
             response_text = response_text[:end]
-        
-        # Apply JSON repair to fix common issues
-        response_text = repair_json_string(response_text)
         
         try:
             itinerary_data = json.loads(response_text)
