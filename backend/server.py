@@ -123,6 +123,7 @@ async def generate_itinerary(request: TripRequest):
         
         # Configure Gemini
         genai.configure(api_key=api_key)
+        # Using 'gemini-1.5-flash' which is the standard model for this task
         model = genai.GenerativeModel('gemini-1.5-flash')
         
         # Create the prompt for the AI - enhanced for TripWise quality
