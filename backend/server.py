@@ -123,8 +123,26 @@ async def generate_itinerary(request: TripRequest):
         
         # Configure Gemini
         genai.configure(api_key=api_key)
-        # Using 'gemini-1.5-flash' which is the standard model for this task
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        # Try a few common model names to avoid the 404 issue
+        available_models = ['gemini-1.5-flash-latest', 'gemini-1.5-flash', 'gemini-pro']
+        model = None
+        last_error = ""
+        
+        for model_name in available_models:
+            try:
+                model = genai.GenerativeModel(model_name)
+                # Test the model with a tiny request to confirm it's valid
+                model.generate_content("test", generation_config={"max_output_tokens": 1})
+                logging.info(f"Successfully selected model: {model_name}")
+                break
+            except Exception as e:
+                logging.warning(f"Model {model_name} failed: {e}")
+                last_error = str(e)
+                model = None
+        
+        if not model:
+            raise HTTPException(status_code=500, detail=f"No capable Gemini model found. Last error: {last_error}")
         
         # Create the prompt for the AI - enhanced for TripWise quality
         prompt = f"""You are an expert travel planner and editor for the mobile app TripWise. Your goal is to create an amazing, personalized travel itinerary.
