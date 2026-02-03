@@ -56,9 +56,21 @@ function App() {
     setLoading(true);
 
     try {
+      console.log("Checking backend connectivity...");
+      // First, try a simple GET to root to see if we can talk to the server at all
+      try {
+        await axios.get(`${API}/`, { timeout: 5000 });
+        console.log("Backend connectivity test passed!");
+      } catch (connErr) {
+        console.error("Connectivity test failed:", connErr);
+        alert(`Cannot reach Server: ${API}. Please check your connection or wait 1 minute.`);
+        setLoading(false);
+        return;
+      }
+
       console.log("Calling API:", `${API}/generate-itinerary`);
       const response = await axios.post(`${API}/generate-itinerary`, formData, {
-        timeout: 60000 // 60 seconds timeout
+        timeout: 90000 // Increased to 90 seconds
       });
       console.log("Response received:", response.data);
       setItinerary(response.data);
