@@ -59,18 +59,18 @@ function App() {
       console.log("Checking backend connectivity...");
       // First, try a simple GET to root to see if we can talk to the server at all
       try {
-        await axios.get(`${API}/`, { timeout: 5000 });
+        await axios.get(`${API}/`, { timeout: 10000 });
         console.log("Backend connectivity test passed!");
       } catch (connErr) {
         console.error("Connectivity test failed:", connErr);
-        alert(`Cannot reach Server: ${API}. Please check your connection or wait 1 minute.`);
+        alert(`Cannot reach Server: ${API}. Check your internet or wait 1 minute.`);
         setLoading(false);
         return;
       }
 
       console.log("Calling API:", `${API}/generate-itinerary`);
       const response = await axios.post(`${API}/generate-itinerary`, formData, {
-        timeout: 90000 // Increased to 90 seconds
+        timeout: 120000 // 2 minutes
       });
       console.log("Response received:", response.data);
       setItinerary(response.data);
@@ -78,7 +78,7 @@ function App() {
     } catch (error) {
       console.error("Full error object:", error);
       if (error.code === 'ECONNABORTED') {
-        alert("The AI is taking too long to write your plan. Please try again or simplify your request.");
+        alert("The AI is taking a bit long (over 2 minutes). Please try again with a shorter prompt.");
       } else {
         const errorMsg = error.response?.data?.detail || "Failed to generate itinerary. Please try again.";
         alert(`Error: ${errorMsg}`);

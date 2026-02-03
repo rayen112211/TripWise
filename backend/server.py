@@ -11,6 +11,7 @@ from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
 import google.generativeai as genai
+import asyncio
 
 
 ROOT_DIR = Path(__file__).parent
@@ -175,26 +176,14 @@ async def generate_itinerary(request: TripRequest):
             raise HTTPException(status_code=500, detail=f"Gemini Configuration Error: {last_error}")
         
         logging.info(f"Generating itinerary for {request.destination}...")
-        prompt = f"""You are an expert travel planner and editor for the mobile app TripWise. Your goal is to create an amazing, personalized travel itinerary.
-
-Destination: {request.destination}
+        # Create the prompt for the AI - simplified for speed
+        prompt = f"""Create a travel itinerary for {request.destination}.
 Dates: {request.start_date} to {request.end_date}
-Travelers: {request.num_travelers} {request.traveler_type}
-Travel Style: {request.travel_style}
-Budget: {request.budget} euros total
-Interests: {request.interests}
-{f'Special Requests: {request.special_requests}' if request.special_requests else ''}
+Travelers: {request.num_travelers} ({request.traveler_type})
+Style: {request.travel_style}
+Budget: {request.budget} euros
 
-**Your Instructions:**
-1. Create clear, concise, and engaging activity descriptions. Use friendly language like "You'll love...", "Don't miss...", "A local favorite!".
-2. Add detailed transport instructions (walking, taxi, metro) with approximate time between locations.
-3. Include local tips, hidden gems, and food recommendations to make it feel personalized.
-4. Adjust timing and pacing based on the travel style (relaxed = fewer activities, adventurous = more packed).
-5. If there are special requests (vegan, halal, accessibility, family-friendly), incorporate them throughout.
-6. Suggest optional activities if extra time is available.
-7. Include 3-4 activities per day matching the travel style and budget.
-
-Return ONLY valid JSON (no markdown, no extra text) in this exact structure:
+Return ONLY valid JSON:
 {{
   "app_name": "TripWise",
   "trip": {{
@@ -207,49 +196,38 @@ Return ONLY valid JSON (no markdown, no extra text) in this exact structure:
     "days": [
       {{
         "day": 1,
-        "title": "A catchy, engaging title for the day",
+        "title": "Title",
         "activities": [
           {{
-            "name": "Activity name",
-            "time": "HH:MM - HH:MM",
-            "description": "Engaging description with personality. Example: 'You'll love the stunning views from here!'",
-            "link": "https://maps.google.com/?q=Location+Name",
-            "transport": "Walk 5 min from previous location",
-            "price": "€XX per person"
+            "name": "Activity",
+            "time": "09:00 - 10:00",
+            "description": "Description",
+            "link": "https://maps.google.com",
+            "transport": "Walk",
+            "price": "€5"
           }}
         ],
-        "daily_tips": [
-          "Local tip or hidden gem",
-          "Food recommendation",
-          "Optional activity if time permits"
-        ]
+        "daily_tips": ["Tip"]
       }}
     ]
   }}
 }}"""
 
+        logging.info("Calling Gemini API...")
         # Get response from Gemini
         try:
-            # Use async version to avoid blocking the event loop for long itineraries
             response = await model.generate_content_async(prompt)
             if not response.parts:
-                # Check for blocking
-                block_reason = getattr(response.prompt_feedback, 'block_reason_message', 'Blocked by safety filters')
-                raise HTTPException(status_code=500, detail=f"AI response blocked: {block_reason}")
-            
+                block_reason = getattr(response.prompt_feedback, 'block_reason_message', 'Blocked')
+                raise HTTPException(status_code=500, detail=f"Blocked: {block_reason}")
             response_text = response.text.strip()
-        except ValueError as e:
-            # This happens if the response is blocked or has no text
-            logging.error(f"Gemini response error: {e}")
-            raise HTTPException(status_code=500, detail=f"AI could not generate content: {str(e)}")
         except Exception as e:
-            logging.error(f"Gemini API call failed: {e}")
-            raise HTTPException(status_code=500, detail=f"Gemini API error: {str(e)}")
+            logging.error(f"Gemini error: {e}")
+            raise HTTPException(status_code=500, detail=f"AI Error: {str(e)}")
         
-        # Clean the response if it has markdown formatting
-        if response_text.startswith("```json"):
-            response_text = response_text.split("```json")[-1].split("```")[0].strip()
-        elif "```json" in response_text:
+        logging.info("AI response received, parsing...")
+        # Clean response
+        if "```json" in response_text:
             response_text = response_text.split("```json")[-1].split("```")[0].strip()
         elif "```" in response_text:
             response_text = response_text.split("```")[-1].split("```")[0].strip()
@@ -257,29 +235,26 @@ Return ONLY valid JSON (no markdown, no extra text) in this exact structure:
         try:
             itinerary_data = json.loads(response_text)
             if "trip" not in itinerary_data:
-                # Some safety: if AI returns it slightly different
-                if "itinerary" in itinerary_data:
-                    itinerary_data["trip"] = itinerary_data["itinerary"]
-                else:
-                    raise KeyError("missing 'trip' key")
-        except (json.JSONDecodeError, KeyError) as parse_error:
-            logging.error(f"Failed to parse AI response: {parse_error}")
-            logging.error(f"Raw response: {response_text[:500]}")
-            raise HTTPException(status_code=500, detail=f"AI returned invalid structure: {str(parse_error)}")
+                if "itinerary" in itinerary_data: itinerary_data["trip"] = itinerary_data["itinerary"]
+                else: raise KeyError("missing trip")
+        except Exception as parse_error:
+            logging.error(f"Parse error: {parse_error}")
+            raise HTTPException(status_code=500, detail="Invalid AI structure")
         
         try:
-            # Create ItineraryResponse object
             itinerary = ItineraryResponse(trip=Trip(**itinerary_data["trip"]))
+            # Async save to DB with timeout
+            try:
+                doc = itinerary.model_dump(mode='json')
+                # Don't let DB hang the whole request, give it 5s
+                await asyncio.wait_for(db.itineraries.insert_one(doc), timeout=5.0)
+            except Exception as db_e:
+                logging.warning(f"DB insertion failed (non-critical): {db_e}")
             
-            # Save to database
-            doc = itinerary.model_dump(mode='json') # Use json mode for serialization safety
-            # No need to manually convert dates in json mode
-            
-            await db.itineraries.insert_one(doc)
             return itinerary
         except Exception as e:
-            logging.error(f"Data processing or DB error: {e}")
-            raise HTTPException(status_code=500, detail=f"Database or Serialization error: {str(e)}")
+            logging.error(f"Processing error: {e}")
+            raise HTTPException(status_code=500, detail="Data processing error")
     except HTTPException:
         raise
     except Exception as e:
