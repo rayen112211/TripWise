@@ -61,7 +61,8 @@ function App() {
       setShowForm(false);
     } catch (error) {
       console.error("Error generating itinerary:", error);
-      alert("Failed to generate itinerary. Please try again.");
+      const errorMsg = error.response?.data?.detail || "Failed to generate itinerary. Please try again.";
+      alert(errorMsg);
     } finally {
       setLoading(false);
     }

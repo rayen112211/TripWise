@@ -180,42 +180,61 @@ Return ONLY valid JSON (no markdown, no extra text) in this exact structure:
 }}"""
 
         # Get response from Gemini
-        response = model.generate_content(prompt)
-        response_text = response.text.strip()
+        try:
+            response = model.generate_content(prompt)
+            if not response.parts:
+                # Check for blocking
+                block_reason = getattr(response.prompt_feedback, 'block_reason_message', 'Blocked by safety filters')
+                raise HTTPException(status_code=500, detail=f"AI response blocked: {block_reason}")
+            
+            response_text = response.text.strip()
+        except ValueError as e:
+            # This happens if the response is blocked or has no text
+            logging.error(f"Gemini response error: {e}")
+            raise HTTPException(status_code=500, detail=f"AI could not generate content: {str(e)}")
+        except Exception as e:
+            logging.error(f"Gemini API call failed: {e}")
+            raise HTTPException(status_code=500, detail=f"Gemini API error: {str(e)}")
         
         # Clean the response if it has markdown formatting
         if response_text.startswith("```json"):
-            response_text = response_text.replace("```json", "").replace("```", "").strip()
-        elif response_text.startswith("```"):
-            response_text = response_text.replace("```", "").strip()
+            response_text = response_text.split("```json")[-1].split("```")[0].strip()
+        elif "```json" in response_text:
+            response_text = response_text.split("```json")[-1].split("```")[0].strip()
+        elif "```" in response_text:
+            response_text = response_text.split("```")[-1].split("```")[0].strip()
         
         try:
             itinerary_data = json.loads(response_text)
-        except json.JSONDecodeError as parse_error:
+            if "trip" not in itinerary_data:
+                # Some safety: if AI returns it slightly different
+                if "itinerary" in itinerary_data:
+                    itinerary_data["trip"] = itinerary_data["itinerary"]
+                else:
+                    raise KeyError("missing 'trip' key")
+        except (json.JSONDecodeError, KeyError) as parse_error:
             logging.error(f"Failed to parse AI response: {parse_error}")
             logging.error(f"Raw response: {response_text[:500]}")
-            raise HTTPException(status_code=500, detail="AI returned invalid JSON format")
+            raise HTTPException(status_code=500, detail=f"AI returned invalid structure: {str(parse_error)}")
         
-        # Create ItineraryResponse object
-        itinerary = ItineraryResponse(trip=Trip(**itinerary_data["trip"]))
-        
-        # Save to database
-        doc = itinerary.model_dump()
-        doc['created_at'] = doc['created_at'].isoformat()
-        doc['trip'] = itinerary_data["trip"]
-        
-        await db.itineraries.insert_one(doc)
-        
-        return itinerary
-        
+        try:
+            # Create ItineraryResponse object
+            itinerary = ItineraryResponse(trip=Trip(**itinerary_data["trip"]))
+            
+            # Save to database
+            doc = itinerary.model_dump(mode='json') # Use json mode for serialization safety
+            # No need to manually convert dates in json mode
+            
+            await db.itineraries.insert_one(doc)
+            return itinerary
+        except Exception as e:
+            logging.error(f"Data processing or DB error: {e}")
+            raise HTTPException(status_code=500, detail=f"Database or Serialization error: {str(e)}")
     except HTTPException:
         raise
-    except json.JSONDecodeError as e:
-        logging.error(f"JSON parsing failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to parse AI response: {str(e)}")
     except Exception as e:
-        logging.error(f"Error generating itinerary: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Error generating itinerary: {str(e)}")
+        logging.error(f"Global error in generate_itinerary: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 
 @api_router.get("/itineraries", response_model=List[ItineraryResponse])
