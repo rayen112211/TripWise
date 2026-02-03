@@ -193,18 +193,12 @@ async def generate_itinerary(request: TripRequest):
             raise HTTPException(status_code=500, detail=f"Gemini Configuration Error: {last_error}")
         
         logging.info(f"Generating itinerary for {request.destination}...")
-        # Create the prompt for the AI - restored for quality but keeping JSON strict
-        prompt = f"""You are an expert travel planner for TripWise. Create an amazing, personalized travel itinerary.
+        # STRICT JSON prompt - emphasize valid syntax
+        prompt = f"""Create a travel itinerary for {request.destination} from {request.start_date} to {request.end_date}.
+{request.num_travelers} {request.traveler_type}. Style: {request.travel_style}. Budget: €{request.budget}. Interests: {request.interests}.
 
-Destination: {request.destination}
-Dates: {request.start_date} to {request.end_date}
-Travelers: {request.num_travelers} ({request.traveler_type})
-Style: {request.travel_style}
-Budget: {request.budget} euros total
-Interests: {request.interests}
-Special Requests: {request.special_requests}
+CRITICAL: Return ONLY valid JSON. No markdown, no text before/after. Ensure all commas are correct, no trailing commas.
 
-Return ONLY valid JSON in this exact structure:
 {{
   "app_name": "TripWise",
   "trip": {{
@@ -217,22 +211,24 @@ Return ONLY valid JSON in this exact structure:
     "days": [
       {{
         "day": 1,
-        "title": "Evening in {request.destination}",
+        "title": "Day Title",
         "activities": [
           {{
-            "name": "Local Dinner",
-            "time": "19:00 - 21:00",
-            "description": "Enjoy traditional cuisine at a local gem.",
+            "name": "Activity Name",
+            "time": "HH:MM - HH:MM",
+            "description": "Short description",
             "link": "https://maps.google.com",
             "transport": "Walking",
-            "price": "€30"
+            "price": "€XX"
           }}
         ],
-        "daily_tips": ["Try the local wine", "Book in advance"]
+        "daily_tips": ["tip 1", "tip 2"]
       }}
     ]
   }}
-}}"""
+}}
+
+REMEMBER: Use commas between array items, NO comma after last item. All strings in quotes."""
 
         logging.info("Calling Gemini API with speed optimizations...")
         # Get response from Gemini with balanced limits
