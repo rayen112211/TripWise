@@ -1,0 +1,161 @@
+{
+  "design_system": {
+    "identity": {
+      "name": "WanderLust AI",
+      "tone": "Vibrant, Energetic, Trustworthy, Adventurous",
+      "theme_mode": "light",
+      "principles": [
+        "Fusion over Imitation: Mix travel journal aesthetics with SaaS precision.",
+        "Emotion First: Every screen should feel like the start of a vacation.",
+        "Content is King: Photos and Maps take precedence over UI chrome.",
+        "Zoom In: Use large, immersive imagery for destinations.",
+        "Negative Space: Use 'Sand' colored backgrounds to let content breathe."
+      ]
+    },
+    "typography": {
+      "font_family": {
+        "headings": "Outfit, sans-serif",
+        "body": "DM Sans, sans-serif",
+        "accent": "Caveat, cursive"
+      },
+      "scale": {
+        "h1": "text-5xl md:text-7xl font-bold tracking-tight",
+        "h2": "text-4xl md:text-5xl font-semibold tracking-tight",
+        "h3": "text-2xl md:text-3xl font-medium",
+        "body_lg": "text-lg leading-relaxed",
+        "body_base": "text-base leading-relaxed",
+        "caption": "text-sm text-muted-foreground uppercase tracking-widest"
+      },
+      "imports": [
+        "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&family=DM+Sans:wght@400;500;700&family=Caveat:wght@400;700&display=swap"
+      ]
+    },
+    "colors": {
+      "palette": {
+        "primary": {
+          "DEFAULT": "#FF6B6B",
+          "foreground": "#FFFFFF",
+          "hover": "#FF5252",
+          "description": "Sunset Coral - Use for primary CTAs and key highlights."
+        },
+        "secondary": {
+          "DEFAULT": "#4ECDC4",
+          "foreground": "#FFFFFF",
+          "description": "Tropical Teal - Use for success states, map markers, and secondary accents."
+        },
+        "background": {
+          "DEFAULT": "#FDFBF7",
+          "paper": "#FFFFFF",
+          "dark": "#2B2D42",
+          "description": "Warm Sand - Main background color to avoid harsh white."
+        },
+        "text": {
+          "primary": "#2B2D42",
+          "secondary": "#5D6D7E",
+          "muted": "#95A5A6"
+        },
+        "accent": {
+          "yellow": "#FFE66D",
+          "navy": "#1A535C"
+        }
+      },
+      "gradients": {
+        "hero": "linear-gradient(135deg, #FF6B6B 0%, #FFE66D 100%)",
+        "ocean": "linear-gradient(180deg, rgba(78, 205, 196, 0) 0%, rgba(78, 205, 196, 0.1) 100%)"
+      }
+    },
+    "layout": {
+      "spacing": {
+        "container_padding": "p-6 md:p-12 lg:p-24",
+        "section_gap": "gap-12 md:gap-24",
+        "card_padding": "p-6 md:p-8"
+      },
+      "border_radius": {
+        "card": "rounded-2xl",
+        "button": "rounded-full",
+        "input": "rounded-xl"
+      },
+      "grids": {
+        "bento": "grid grid-cols-1 md:grid-cols-3 gap-6",
+        "timeline": "flex flex-col gap-8 border-l-2 border-dashed border-primary/20 pl-8 ml-4"
+      }
+    },
+    "components": {
+      "buttons": {
+        "primary": "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 rounded-full px-8 py-6 text-lg font-medium",
+        "secondary": "bg-white text-primary border-2 border-primary/10 hover:border-primary hover:bg-primary/5 transition-all duration-300 rounded-full px-8 py-6 text-lg font-medium",
+        "ghost": "hover:bg-primary/5 text-primary hover:text-primary/80 transition-colors"
+      },
+      "cards": {
+        "base": "bg-white rounded-2xl shadow-sm border border-border/40 hover:shadow-md transition-all duration-300 overflow-hidden",
+        "glass": "bg-white/70 backdrop-blur-xl border border-white/20 shadow-xl",
+        "interactive": "cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-transform duration-200"
+      },
+      "inputs": {
+        "base": "h-14 bg-white border-2 border-transparent focus:border-primary/20 focus:ring-4 focus:ring-primary/10 rounded-xl text-lg px-6 transition-all shadow-sm hover:shadow-md"
+      }
+    },
+    "visual_assets": {
+      "images": {
+        "hero_bg": {
+          "url": "https://images.unsplash.com/photo-1631535152690-ba1a85229136?crop=entropy&cs=srgb&fm=jpg&q=85",
+          "alt": "Tropical sunset beach",
+          "usage": "Hero section background or main landing visual"
+        },
+        "adventure": {
+          "url": "https://images.unsplash.com/photo-1755766335131-b0cb1081d567?crop=entropy&cs=srgb&fm=jpg&q=85",
+          "alt": "Hiker on mountain",
+          "usage": "Adventure category or trip type selection"
+        },
+        "city_life": {
+          "url": "https://images.unsplash.com/photo-1759800805678-2f1b27b1fe6d?crop=entropy&cs=srgb&fm=jpg&q=85",
+          "alt": "Bustling night market",
+          "usage": "Foodie/City category or itinerary activity example"
+        },
+        "landmark": {
+          "url": "https://images.unsplash.com/photo-1590319571948-ca204a4c9882?crop=entropy&cs=srgb&fm=jpg&q=85",
+          "alt": "Eiffel Tower Paris",
+          "usage": "Destination example or popular trips"
+        }
+      },
+      "icons": {
+        "library": "lucide-react",
+        "style": "Stroke width 1.5px, rounded caps"
+      }
+    },
+    "motion": {
+      "libraries": ["framer-motion"],
+      "presets": {
+        "fade_up": {
+          "initial": { "opacity": 0, "y": 20 },
+          "animate": { "opacity": 1, "y": 0 },
+          "transition": { "duration": 0.5, "ease": "easeOut" }
+        },
+        "stagger_container": {
+          "animate": { "transition": { "staggerChildren": 0.1 } }
+        },
+        "hover_lift": {
+          "whileHover": { "y": -5, "transition": { "duration": 0.2 } }
+        }
+      }
+    }
+  },
+  "implementation_guide": {
+    "steps": [
+      "1. Setup Fonts: Add Google Fonts imports to index.css",
+      "2. Configure Tailwind: Update tailwind.config.js with the 'WanderLust' color palette and border radius.",
+      "3. Global Styles: Set body background to #FDFBF7 in index.css.",
+      "4. Component Overrides: Customize Shadcn components (Button, Card, Input) to match the rounded, vibrant aesthetic.",
+      "5. Layout Construction: Build the Hero section using the 'hero_bg' image and a glassmorphism search card.",
+      "6. Form Design: Create a multi-step wizard for trip planning using framer-motion for smooth transitions between steps.",
+      "7. Itinerary View: Implement the timeline layout for the day-by-day plan."
+    ],
+    "universal_rules": [
+      "Do NOT use default Shadcn styling. Override with the specified rounded-full and vibrant colors.",
+      "Ensure all interactive elements have hover states.",
+      "Use 'sonner' for all toast notifications.",
+      "Add 'data-testid' to all interactive elements.",
+      "Mobile responsiveness is critical - test all grids on small screens."
+    ]
+  }
+}
