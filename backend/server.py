@@ -234,10 +234,18 @@ Return ONLY valid JSON in this exact structure:
   }}
 }}"""
 
-        logging.info("Calling Gemini API...")
-        # Get response from Gemini
+        logging.info("Calling Gemini API with speed optimizations...")
+        # Get response from Gemini with limits for faster response
         try:
-            response = await model.generate_content_async(prompt)
+            # Speed optimization: limit output tokens
+            generation_config = {
+                "max_output_tokens": 2000,  # Prevent overly long responses
+                "temperature": 0.8,  # Slightly more creative but still fast
+            }
+            response = await model.generate_content_async(
+                prompt,
+                generation_config=generation_config
+            )
             if not response.parts:
                 block_reason = getattr(response.prompt_feedback, 'block_reason_message', 'Blocked')
                 raise HTTPException(status_code=500, detail=f"Blocked: {block_reason}")
