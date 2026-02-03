@@ -234,13 +234,13 @@ Return ONLY valid JSON in this exact structure:
   }}
 }}"""
 
-        logging.info("Calling Gemini API with speed optimizations...")
-        # Get response from Gemini with limits for faster response
+        logging.info("Calling Gemini API with MAXIMUM speed optimizations...")
+        # Get response from Gemini with aggressive limits for speed
         try:
-            # Speed optimization: limit output tokens
+            # ULTRA SPEED: Very short token limit
             generation_config = {
-                "max_output_tokens": 2000,  # Prevent overly long responses
-                "temperature": 0.8,  # Slightly more creative but still fast
+                "max_output_tokens": 1200,  # Aggressive limit for speed
+                "temperature": 0.9,  # High creativity, fast generation
             }
             response = await model.generate_content_async(
                 prompt,
