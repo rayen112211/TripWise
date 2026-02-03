@@ -234,13 +234,13 @@ Return ONLY valid JSON in this exact structure:
   }}
 }}"""
 
-        logging.info("Calling Gemini API with MAXIMUM speed optimizations...")
-        # Get response from Gemini with aggressive limits for speed
+        logging.info("Calling Gemini API with speed optimizations...")
+        # Get response from Gemini with balanced limits
         try:
-            # ULTRA SPEED: Very short token limit
+            # Balanced: Fast but allows complete JSON response
             generation_config = {
-                "max_output_tokens": 1200,  # Aggressive limit for speed
-                "temperature": 0.9,  # High creativity, fast generation
+                "max_output_tokens": 1800,  # Enough for complete JSON, still fast
+                "temperature": 0.8,  # Good creativity/speed balance
             }
             response = await model.generate_content_async(
                 prompt,
@@ -255,20 +255,33 @@ Return ONLY valid JSON in this exact structure:
             raise HTTPException(status_code=500, detail=f"AI Error: {str(e)}")
         
         logging.info("AI response received, parsing...")
-        # Clean response
+        logging.info(f"Raw response length: {len(response_text)} chars")
+        
+        # Clean response - remove markdown code blocks
         if "```json" in response_text:
             response_text = response_text.split("```json")[-1].split("```")[0].strip()
         elif "```" in response_text:
-            response_text = response_text.split("```")[-1].split("```")[0].strip()
+            response_text = response_text.split("```")[1].strip() if response_text.count("```") >= 2 else response_text
+        
+        # Remove any leading/trailing text outside JSON
+        if "{" in response_text:
+            start = response_text.index("{")
+            response_text = response_text[start:]
+        if response_text.rfind("}") != -1:
+            end = response_text.rfind("}") + 1
+            response_text = response_text[:end]
         
         try:
             itinerary_data = json.loads(response_text)
             if "trip" not in itinerary_data:
-                if "itinerary" in itinerary_data: itinerary_data["trip"] = itinerary_data["itinerary"]
-                else: raise KeyError("missing trip")
+                if "itinerary" in itinerary_data: 
+                    itinerary_data["trip"] = itinerary_data["itinerary"]
+                else: 
+                    raise KeyError("missing trip key")
         except Exception as parse_error:
-            logging.error(f"Parse error: {parse_error}")
-            raise HTTPException(status_code=500, detail="Invalid AI structure")
+            logging.error(f"JSON Parse error: {parse_error}")
+            logging.error(f"AI response was: {response_text[:500]}...")  # Log first 500 chars
+            raise HTTPException(status_code=500, detail=f"Invalid AI structure: {str(parse_error)}")
         
         try:
             itinerary = ItineraryResponse(trip=Trip(**itinerary_data["trip"]))
