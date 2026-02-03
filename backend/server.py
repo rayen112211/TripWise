@@ -250,13 +250,14 @@ CRITICAL: Return ONLY valid JSON. No markdown, no text before/after. Ensure all 
 
 REMEMBER: Use commas between array items, NO comma after last item. All strings in quotes."""
 
-        logging.info("Calling Gemini API with speed optimizations...")
-        # Get response from Gemini with balanced limits
+        logging.info("Calling Gemini API with JSON mode (guaranteed valid)...")
+        # Get response using NATIVE JSON MODE - forces valid JSON
         try:
-            # Balanced: Fast but allows complete JSON response
+            # JSON MODE: Model MUST return valid JSON
             generation_config = {
-                "max_output_tokens": 1800,  # Enough for complete JSON, still fast
-                "temperature": 0.8,  # Good creativity/speed balance
+                "response_mime_type": "application/json",  # FORCES valid JSON
+                "max_output_tokens": 1800,
+                "temperature": 0.8,
             }
             response = await model.generate_content_async(
                 prompt,
