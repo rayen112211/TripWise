@@ -130,16 +130,19 @@ async def generate_itinerary(request: TripRequest):
         available_names = []
         
         try:
+            logging.info("Listing available Gemini models...")
             for m in genai.list_models():
                 if 'generateContent' in m.supported_generation_methods:
                     available_names.append(m.name)
             
+            logging.info(f"Available models found: {available_names}")
+            
             # Prefer 1.5 variants, then 1.0, then any
             priority_names = [
-                'models/gemini-1.5-flash-latest', 
                 'models/gemini-1.5-flash', 
-                'models/gemini-1.5-pro-latest',
+                'models/gemini-1.5-flash-latest',
                 'models/gemini-1.5-pro',
+                'models/gemini-1.5-pro-latest',
                 'models/gemini-1.0-pro'
             ]
             
@@ -154,15 +157,16 @@ async def generate_itinerary(request: TripRequest):
                 
             if selected_name:
                 model = genai.GenerativeModel(selected_name)
-                logging.info(f"Dynamically selected model: {selected_name}")
+                logging.info(f"Selected model for generation: {selected_name}")
             else:
                 last_error = f"No models supporting generateContent found. Available: {available_names}"
         except Exception as list_err:
             logging.error(f"Failed to list models: {list_err}")
-            # Fallback to a last-ditch attempt if listing fails
+            # Fallback
             try:
-                model = genai.GenerativeModel('gemini-1.5-flash')
-                model.generate_content("test", generation_config={"max_output_tokens": 1})
+                selected_name = 'models/gemini-1.5-flash'
+                model = genai.GenerativeModel(selected_name)
+                logging.info(f"Fallback to model: {selected_name}")
             except Exception as final_err:
                 last_error = f"ListModels failed: {list_err}. Fallback failed: {final_err}"
                 model = None
@@ -170,7 +174,7 @@ async def generate_itinerary(request: TripRequest):
         if not model:
             raise HTTPException(status_code=500, detail=f"Gemini Configuration Error: {last_error}")
         
-        # Create the prompt for the AI - enhanced for TripWise quality
+        logging.info(f"Generating itinerary for {request.destination}...")
         prompt = f"""You are an expert travel planner and editor for the mobile app TripWise. Your goal is to create an amazing, personalized travel itinerary.
 
 Destination: {request.destination}
@@ -298,10 +302,11 @@ async def get_itineraries():
 # Include the router in the main app
 app.include_router(api_router)
 
+# CORS must be after router for some cases, and allow_credentials=True + origin='*' is not allowed by browsers
 app.add_middleware(
     CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

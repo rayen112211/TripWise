@@ -56,13 +56,21 @@ function App() {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${API}/generate-itinerary`, formData);
+      console.log("Calling API:", `${API}/generate-itinerary`);
+      const response = await axios.post(`${API}/generate-itinerary`, formData, {
+        timeout: 60000 // 60 seconds timeout
+      });
+      console.log("Response received:", response.data);
       setItinerary(response.data);
       setShowForm(false);
     } catch (error) {
-      console.error("Error generating itinerary:", error);
-      const errorMsg = error.response?.data?.detail || "Failed to generate itinerary. Please try again.";
-      alert(errorMsg);
+      console.error("Full error object:", error);
+      if (error.code === 'ECONNABORTED') {
+        alert("The AI is taking too long to write your plan. Please try again or simplify your request.");
+      } else {
+        const errorMsg = error.response?.data?.detail || "Failed to generate itinerary. Please try again.";
+        alert(`Error: ${errorMsg}`);
+      }
     } finally {
       setLoading(false);
     }
