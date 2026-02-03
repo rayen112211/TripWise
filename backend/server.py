@@ -161,8 +161,15 @@ async def generate_itinerary(request: TripRequest):
                 selected_name = available_names[0]
                 
             if selected_name:
-                model = genai.GenerativeModel(selected_name)
-                logging.info(f"Selected model for generation: {selected_name}")
+                # Use safety settings to prevent blocking
+                safety_settings = [
+                    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+                ]
+                model = genai.GenerativeModel(selected_name, safety_settings=safety_settings)
+                logging.info(f"Selected model with safety settings: {selected_name}")
             else:
                 last_error = f"No models supporting generateContent found. Available: {available_names}"
         except Exception as list_err:
@@ -170,8 +177,14 @@ async def generate_itinerary(request: TripRequest):
             # Fallback
             try:
                 selected_name = 'models/gemini-1.5-flash'
-                model = genai.GenerativeModel(selected_name)
-                logging.info(f"Fallback to model: {selected_name}")
+                safety_settings = [
+                    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+                ]
+                model = genai.GenerativeModel(selected_name, safety_settings=safety_settings)
+                logging.info(f"Fallback to model with safety: {selected_name}")
             except Exception as final_err:
                 last_error = f"ListModels failed: {list_err}. Fallback failed: {final_err}"
                 model = None
@@ -180,14 +193,18 @@ async def generate_itinerary(request: TripRequest):
             raise HTTPException(status_code=500, detail=f"Gemini Configuration Error: {last_error}")
         
         logging.info(f"Generating itinerary for {request.destination}...")
-        # Create the prompt for the AI - simplified for speed
-        prompt = f"""Create a travel itinerary for {request.destination}.
+        # Create the prompt for the AI - restored for quality but keeping JSON strict
+        prompt = f"""You are an expert travel planner for TripWise. Create an amazing, personalized travel itinerary.
+
+Destination: {request.destination}
 Dates: {request.start_date} to {request.end_date}
 Travelers: {request.num_travelers} ({request.traveler_type})
 Style: {request.travel_style}
-Budget: {request.budget} euros
+Budget: {request.budget} euros total
+Interests: {request.interests}
+Special Requests: {request.special_requests}
 
-Return ONLY valid JSON:
+Return ONLY valid JSON in this exact structure:
 {{
   "app_name": "TripWise",
   "trip": {{
@@ -200,18 +217,18 @@ Return ONLY valid JSON:
     "days": [
       {{
         "day": 1,
-        "title": "Title",
+        "title": "Evening in {request.destination}",
         "activities": [
           {{
-            "name": "Activity",
-            "time": "09:00 - 10:00",
-            "description": "Description",
+            "name": "Local Dinner",
+            "time": "19:00 - 21:00",
+            "description": "Enjoy traditional cuisine at a local gem.",
             "link": "https://maps.google.com",
-            "transport": "Walk",
-            "price": "€5"
+            "transport": "Walking",
+            "price": "€30"
           }}
         ],
-        "daily_tips": ["Tip"]
+        "daily_tips": ["Try the local wine", "Book in advance"]
       }}
     ]
   }}
