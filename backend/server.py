@@ -124,25 +124,51 @@ async def generate_itinerary(request: TripRequest):
         # Configure Gemini
         genai.configure(api_key=api_key)
         
-        # Try a few common model names to avoid the 404 issue
-        available_models = ['gemini-1.5-flash-latest', 'gemini-1.5-flash', 'gemini-pro']
+        # Dynamically find an available model that supports generation
         model = None
         last_error = ""
+        available_names = []
         
-        for model_name in available_models:
+        try:
+            for m in genai.list_models():
+                if 'generateContent' in m.supported_generation_methods:
+                    available_names.append(m.name)
+            
+            # Prefer 1.5 variants, then 1.0, then any
+            priority_names = [
+                'models/gemini-1.5-flash-latest', 
+                'models/gemini-1.5-flash', 
+                'models/gemini-1.5-pro-latest',
+                'models/gemini-1.5-pro',
+                'models/gemini-1.0-pro'
+            ]
+            
+            selected_name = None
+            for p in priority_names:
+                if p in available_names:
+                    selected_name = p
+                    break
+            
+            if not selected_name and available_names:
+                selected_name = available_names[0]
+                
+            if selected_name:
+                model = genai.GenerativeModel(selected_name)
+                logging.info(f"Dynamically selected model: {selected_name}")
+            else:
+                last_error = f"No models supporting generateContent found. Available: {available_names}"
+        except Exception as list_err:
+            logging.error(f"Failed to list models: {list_err}")
+            # Fallback to a last-ditch attempt if listing fails
             try:
-                model = genai.GenerativeModel(model_name)
-                # Test the model with a tiny request to confirm it's valid
+                model = genai.GenerativeModel('gemini-1.5-flash')
                 model.generate_content("test", generation_config={"max_output_tokens": 1})
-                logging.info(f"Successfully selected model: {model_name}")
-                break
-            except Exception as e:
-                logging.warning(f"Model {model_name} failed: {e}")
-                last_error = str(e)
+            except Exception as final_err:
+                last_error = f"ListModels failed: {list_err}. Fallback failed: {final_err}"
                 model = None
         
         if not model:
-            raise HTTPException(status_code=500, detail=f"No capable Gemini model found. Last error: {last_error}")
+            raise HTTPException(status_code=500, detail=f"Gemini Configuration Error: {last_error}")
         
         # Create the prompt for the AI - enhanced for TripWise quality
         prompt = f"""You are an expert travel planner and editor for the mobile app TripWise. Your goal is to create an amazing, personalized travel itinerary.
