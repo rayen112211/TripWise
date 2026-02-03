@@ -226,7 +226,8 @@ Return ONLY valid JSON (no markdown, no extra text) in this exact structure:
 
         # Get response from Gemini
         try:
-            response = model.generate_content(prompt)
+            # Use async version to avoid blocking the event loop for long itineraries
+            response = await model.generate_content_async(prompt)
             if not response.parts:
                 # Check for blocking
                 block_reason = getattr(response.prompt_feedback, 'block_reason_message', 'Blocked by safety filters')
