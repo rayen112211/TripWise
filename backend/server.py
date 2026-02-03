@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
-from openai import AsyncOpenAI
+import google.generativeai as genai
 
 
 ROOT_DIR = Path(__file__).parent
@@ -113,13 +113,17 @@ async def get_status_checks():
 @api_router.post("/generate-itinerary", response_model=ItineraryResponse)
 async def generate_itinerary(request: TripRequest):
     """
-    Generate a personalized travel itinerary using OpenAI GPT-5.2
+    Generate a personalized travel itinerary using Google Gemini AI
     """
     try:
-        # Get OPENAI_API_KEY from environment
-        api_key = os.environ.get('OPENAI_API_KEY')
+        # Get GEMINI_API_KEY from environment
+        api_key = os.environ.get('GEMINI_API_KEY')
         if not api_key:
-            raise HTTPException(status_code=500, detail="OPENAI_API_KEY not configured")
+            raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
+        
+        # Configure Gemini
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-1.5-flash')
         
         # Create the prompt for the AI - enhanced for TripWise quality
         prompt = f"""You are an expert travel planner and editor for the mobile app TripWise. Your goal is to create an amazing, personalized travel itinerary.
@@ -141,7 +145,7 @@ Interests: {request.interests}
 6. Suggest optional activities if extra time is available.
 7. Include 3-4 activities per day matching the travel style and budget.
 
-Return ONLY valid JSON (no markdown) in this exact structure:
+Return ONLY valid JSON (no markdown, no extra text) in this exact structure:
 {{
   "app_name": "TripWise",
   "trip": {{
@@ -175,23 +179,11 @@ Return ONLY valid JSON (no markdown) in this exact structure:
   }}
 }}"""
 
-        # Initialize OpenAI client
-        openai_client = AsyncOpenAI(api_key=api_key)
+        # Get response from Gemini
+        response = model.generate_content(prompt)
+        response_text = response.text.strip()
         
-        # Get response from AI
-        completion = await openai_client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": "You are an expert travel planner for TripWise. Create engaging, personalized itineraries with a friendly, helpful tone. Return only valid JSON responses."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7
-        )
-        response = completion.choices[0].message.content
-        
-        # Parse the JSON response
         # Clean the response if it has markdown formatting
-        response_text = response.strip()
         if response_text.startswith("```json"):
             response_text = response_text.replace("```json", "").replace("```", "").strip()
         elif response_text.startswith("```"):
