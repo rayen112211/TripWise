@@ -1,0 +1,54 @@
+/* Mobile responsiveness fixes */
+@media (max-width: 768px) {
+
+    /* Reduce font sizes */
+    .text-display {
+        font-size: clamp(2.5rem, 10vw, 4rem) !important;
+    }
+
+    .text-headline {
+        font-size: clamp(2rem, 8vw, 3rem) !important;
+    }
+
+    /* Prevent horizontal scroll */
+    body {
+        overflow-x: hidden;
+    }
+
+    /* Better touch targets */
+    input,
+    button,
+    select {
+        min-height: 48px !important;
+    }
+
+    /* Stack grids vertically */
+    .grid {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    /* Smaller padding */
+    .p-8 {
+        padding: 1.5rem !important;
+    }
+
+    .p-6 {
+        padding: 1rem !important;
+    }
+}
+
+@media (max-width: 400px) {
+    .text-display {
+        font-size: 2rem !important;
+    }
+
+    .text-headline {
+        font-size: 1.75rem !important;
+    }
+
+    .p-8 {
+        padding: 1rem !important;
+    }
+}
