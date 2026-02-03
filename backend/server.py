@@ -116,10 +116,10 @@ async def generate_itinerary(request: TripRequest):
     Generate a personalized travel itinerary using OpenAI GPT-5.2
     """
     try:
-        # Get EMERGENT_LLM_KEY from environment
-        api_key = os.environ.get('EMERGENT_LLM_KEY')
+        # Get OPENAI_API_KEY from environment
+        api_key = os.environ.get('OPENAI_API_KEY')
         if not api_key:
-            raise HTTPException(status_code=500, detail="EMERGENT_LLM_KEY not configured")
+            raise HTTPException(status_code=500, detail="OPENAI_API_KEY not configured")
         
         # Create the prompt for the AI - enhanced for TripWise quality
         prompt = f"""You are an expert travel planner and editor for the mobile app TripWise. Your goal is to create an amazing, personalized travel itinerary.
