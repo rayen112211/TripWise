@@ -32,6 +32,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { DayCard } from "@/components/DayCard";
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { DestinationAutocomplete } from "@/components/DestinationAutocomplete";
 import "./App.css";
 
 const API = process.env.REACT_APP_API_URL || "http://localhost:8000/api";
@@ -317,8 +318,8 @@ function App() {
                   {[1, 2, 3].map((step) => (
                     <React.Fragment key={step}>
                       <div className={`flex items-center justify-center w-10 h-10 rounded-full font-bold transition-all ${formStep >= step
-                          ? 'bg-primary text-white scale-110'
-                          : 'bg-muted text-muted-foreground'
+                        ? 'bg-primary text-white scale-110'
+                        : 'bg-muted text-muted-foreground'
                         }`}>
                         {step}
                       </div>
@@ -365,14 +366,10 @@ function App() {
                             <MapPin className="w-5 h-5 text-primary" />
                             Destination
                           </Label>
-                          <Input
-                            id="destination"
-                            data-testid="destination-input"
-                            placeholder="e.g., Paris, Tokyo, Barcelona"
+                          <DestinationAutocomplete
                             value={formData.destination}
-                            onChange={(e) => handleInputChange('destination', e.target.value)}
+                            onChange={(value) => handleInputChange('destination', value)}
                             required
-                            className="h-14 text-lg rounded-xl shadow-soft focus:shadow-medium transition-shadow"
                           />
                         </div>
 
@@ -521,8 +518,8 @@ function App() {
                                 type="button"
                                 onClick={() => toggleInterest(interest.label)}
                                 className={`px-4 py-2 rounded-full font-medium transition-all ${selectedInterests.includes(interest.label)
-                                    ? 'bg-primary text-white shadow-medium scale-105'
-                                    : 'bg-muted text-foreground hover:bg-primary/10'
+                                  ? 'bg-primary text-white shadow-medium scale-105'
+                                  : 'bg-muted text-foreground hover:bg-primary/10'
                                   }`}
                               >
                                 {interest.emoji} {interest.label}
