@@ -1,8 +1,8 @@
-[phases.setup]
-nixPkgs = ["python311"]
+﻿[phases.setup]
+nixPkgs = ["python311", "python311Packages.pip"]
 
 [phases.install]
-cmds = ["pip install -r backend/requirements.txt --no-cache-dir"]
+cmds = ["python3.11 -m pip install -r backend/requirements.txt --no-cache-dir"]
 
 [start]
-cmd = "cd backend && uvicorn server:app --host 0.0.0.0 --port $PORT"
+cmd = "cd backend && python3.11 -m uvicorn server:app --host 0.0.0.0 --port $PORT"
