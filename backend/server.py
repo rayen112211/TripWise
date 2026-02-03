@@ -12,7 +12,7 @@ import uuid
 from datetime import datetime, timezone
 import google.generativeai as genai
 import asyncio
-import reimport re
+import re
 
 
 ROOT_DIR = Path(__file__).parent
