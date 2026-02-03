@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
-from emergentintegrations.llm.chat import LlmChat, UserMessage
+from openai import AsyncOpenAI
 
 
 ROOT_DIR = Path(__file__).parent
@@ -175,18 +175,19 @@ Return ONLY valid JSON (no markdown) in this exact structure:
   }}
 }}"""
 
-        # Initialize LlmChat with OpenAI GPT-4o
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=f"trip-{request.destination}-{datetime.now().timestamp()}",
-            system_message="You are an expert travel planner for TripWise. Create engaging, personalized itineraries with a friendly, helpful tone. Return only valid JSON responses."
-        ).with_model("openai", "gpt-4o")
-        
-        # Create user message
-        user_message = UserMessage(text=prompt)
+        # Initialize OpenAI client
+        openai_client = AsyncOpenAI(api_key=api_key)
         
         # Get response from AI
-        response = await chat.send_message(user_message)
+        completion = await openai_client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are an expert travel planner for TripWise. Create engaging, personalized itineraries with a friendly, helpful tone. Return only valid JSON responses."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7
+        )
+        response = completion.choices[0].message.content
         
         # Parse the JSON response
         # Clean the response if it has markdown formatting
